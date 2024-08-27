@@ -3,6 +3,7 @@ package controller
 import (
 	"loantracker/domain"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -59,15 +60,19 @@ func (c *UserController) VerifyEmail(ctx *gin.Context) {
 
 }
 func (c *UserController) Login(ctx *gin.Context) {
+
 	var user domain.User
 
 	// Bind the request body to the loginRequest struct
 	if err := ctx.ShouldBindJSON(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.logusecase.LogLoginAttempt(ctx.PostForm("email"), false, time.Now().String())
+
 		return
 	}
 	if user.Email == "" || user.Password == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Email and password are required"})
+		c.logusecase.LogLoginAttempt(ctx.PostForm("email"), false, time.Now().String())
 		return
 	}
 
@@ -75,9 +80,10 @@ func (c *UserController) Login(ctx *gin.Context) {
 	token, err := c.userUsecase.Login(&user)
 	if err != nil {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+		c.logusecase.LogLoginAttempt(ctx.PostForm("email"), false, time.Now().String())
 		return
 	}
-
+	c.logusecase.LogLoginAttempt(ctx.PostForm("email"), true, time.Now().String())
 	ctx.JSON(http.StatusOK, gin.H{"token": token})
 }
 func (c *UserController) ResetPassword(ctx *gin.Context) {
@@ -88,10 +94,12 @@ func (c *UserController) ResetPassword(ctx *gin.Context) {
 	// Bind the request body to the resetRequest struct
 	if err := ctx.ShouldBindJSON(&resetRequest); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		c.logusecase.LogPasswordResetRequest(ctx.PostForm("email"), false, time.Now().String())
 		return
 	}
 	if resetRequest.Email == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Email is required"})
+		c.logusecase.LogPasswordResetRequest(ctx.PostForm("email"), false, time.Now().String())
 		return
 	}
 
@@ -99,9 +107,10 @@ func (c *UserController) ResetPassword(ctx *gin.Context) {
 	err := c.userUsecase.ResetPassword(resetRequest.Email)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		c.logusecase.LogPasswordResetRequest(ctx.PostForm("email"), false, time.Now().String())
 		return
 	}
-
+	c.logusecase.LogPasswordResetRequest(ctx.PostForm("email"), true, time.Now().String())
 	ctx.JSON(http.StatusOK, gin.H{"message": "Password reset initiated, check your email for instructions"})
 }
 func (c *UserController) UpdatePassword(ctx *gin.Context) {
@@ -136,6 +145,8 @@ func (c *UserController) UpdatePassword(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
+	c.logusecase.LogPasswordResetSuccess(updateRequest.Email, true, time.Now().String())
+
 }
 func (c *UserController) GetUsersHandler(ctx *gin.Context) {
 	claims := ctx.MustGet("claims").(*domain.Claims)

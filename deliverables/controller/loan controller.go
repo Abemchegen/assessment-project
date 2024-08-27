@@ -3,6 +3,7 @@ package controller
 import (
 	"loantracker/domain"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -56,6 +57,8 @@ func (lc *LoanController) Apply(ctx *gin.Context) {
 		"message": "Loan application submitted successfully",
 		"loan_id": loan.ID.Hex(),
 	})
+
+	lc.logusecase.LogLoanApplication(loan.ID.Hex(), time.Now().Format("2006-01-02 15:04:05"))
 
 }
 func (lc *LoanController) View(ctx *gin.Context) {
@@ -124,6 +127,7 @@ func (lc *LoanController) ApproveReject(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": "Loan updated successfully",
 	})
+	lc.logusecase.LogLoanApproval(loanID, status == "approved")
 
 }
 func (lc *LoanController) Delete(ctx *gin.Context) {
