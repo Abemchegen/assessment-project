@@ -103,6 +103,14 @@ func (c *UserController) ResetPassword(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Password reset initiated, check your email for instructions"})
 }
 func (c *UserController) UpdatePassword(ctx *gin.Context) {
+
+	claims := ctx.MustGet("claims").(*domain.Claims)
+
+	if claims.Name == "" || claims.ID == "" || claims.Role == "" {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "unauthorized"})
+		return
+	}
+
 	var updateRequest struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
@@ -128,8 +136,8 @@ func (c *UserController) UpdatePassword(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"message": "Password updated successfully"})
 }
 func (c *UserController) GetUsersHandler(ctx *gin.Context) {
-	role := ctx.Query("role")
-	if role != "admin" {
+	claims := ctx.MustGet("claims").(*domain.Claims)
+	if claims.Role != "admin" {
 		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
@@ -141,17 +149,14 @@ func (c *UserController) GetUsersHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"users": users})
 }
 func (c *UserController) GetUserHandler(ctx *gin.Context) {
-	var userID string
-
-	// Get the user ID from the request query parameter
-	userID = ctx.Query("id")
-	if userID == "" {
-		ctx.JSON(http.StatusBadRequest, gin.H{"error": "User ID is required"})
+	claims := ctx.MustGet("claims").(*domain.Claims)
+	if (claims.Role != "user" && claims.Role != "admin") || claims.ID == "" {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
 	// Call the user usecase to get the user
-	user, err := c.userUsecase.GetUser(userID)
+	user, err := c.userUsecase.GetUser(claims.ID)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -160,10 +165,14 @@ func (c *UserController) GetUserHandler(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{"user": user})
 }
 func (c *UserController) DeleteUserHandler(ctx *gin.Context) {
-	var userID string
+	claims := ctx.MustGet("claims").(*domain.Claims)
+	if claims.Role != "admin" {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
 
 	// Get the user ID from the request query parameter
-	userID = ctx.Query("id")
+	userID := ctx.Query("id")
 	if userID == "" {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "User ID is required"})
 		return

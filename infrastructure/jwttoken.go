@@ -28,7 +28,7 @@ func GenerateJWT(name, id, role string, isaccesstoken bool) (string, error) {
 	var expie int64
 
 	if isaccesstoken {
-		expie = time.Now().Add(time.Hour * 48).Unix()
+		expie = time.Now().Add(time.Hour * 1).Unix()
 	} else {
 		expie = time.Now().Add(time.Hour * 24 * 10).Unix()
 	}

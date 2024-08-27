@@ -21,7 +21,7 @@ func NewUserRepository(db *mongo.Client) domain.UserRepository {
 	return &UserRepository{
 		db:         db,
 		database:   db.Database("Loan-tracker"),
-		collection: db.Database("Loan-tracker").Collection("Loans"),
+		collection: db.Database("Loan-tracker").Collection("Users"),
 	}
 }
 func (r *UserRepository) Register(user *domain.User) error {
@@ -35,13 +35,13 @@ func (r *UserRepository) Register(user *domain.User) error {
 		return err
 	}
 	user.Password = hashedPassword
-	result, err := r.collection.InsertOne(context.TODO(), user)
+	user.ID = primitive.NewObjectID()
+	_, err = r.collection.InsertOne(context.TODO(), user)
 
 	if err != nil {
 		return err
 	}
 
-	user.ID = result.InsertedID.(primitive.ObjectID)
 	token, err := infrastructure.GenerateJWT(user.Name, user.ID.Hex(), user.Role, true)
 	if err != nil {
 		return err
@@ -129,29 +129,29 @@ func (r *UserRepository) UpdatePassword(email string, password string) error {
 	}
 	return nil
 }
-func (r *UserRepository) GetUsers() ([]domain.User, error) {
-	var users []domain.User
+func (r *UserRepository) GetUsers() ([]domain.ResponceUser, error) {
+	var users []domain.ResponceUser
 	cursor, err := r.collection.Find(context.Background(), bson.M{})
 	if err != nil {
 		return nil, err
 	}
 	defer cursor.Close(context.Background())
 	for cursor.Next(context.Background()) {
-		var user domain.User
+		var user domain.ResponceUser
 		cursor.Decode(&user)
 		users = append(users, user)
 	}
 	return users, nil
 }
-func (r *UserRepository) GetUser(id string) (domain.User, error) {
-	var user domain.User
+func (r *UserRepository) GetUser(id string) (domain.ResponceUser, error) {
+	var user domain.ResponceUser
 	userid, err := primitive.ObjectIDFromHex(id)
 	if err != nil {
-		return domain.User{}, err
+		return domain.ResponceUser{}, err
 	}
 	err = r.collection.FindOne(context.TODO(), bson.M{"_id": userid}).Decode(&user)
 	if err != nil {
-		return domain.User{}, err
+		return domain.ResponceUser{}, err
 	}
 
 	return user, nil

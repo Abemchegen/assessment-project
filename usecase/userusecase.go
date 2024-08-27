@@ -49,19 +49,19 @@ func (u *UserUsecase) UpdatePassword(email string, password string) error {
 	}
 	return nil
 }
-func (u *UserUsecase) GetUsers() ([]domain.User, error) {
-	var user []domain.User
+func (u *UserUsecase) GetUsers() ([]domain.ResponceUser, error) {
+	var user []domain.ResponceUser
 	user, err := u.userRepo.GetUsers()
 	if err != nil {
 		return nil, err
 	}
 	return user, nil
 }
-func (u *UserUsecase) GetUser(id string) (domain.User, error) {
-	var user domain.User
+func (u *UserUsecase) GetUser(id string) (domain.ResponceUser, error) {
+	var user domain.ResponceUser
 	user, err := u.userRepo.GetUser(id)
 	if err != nil {
-		return domain.User{}, err
+		return domain.ResponceUser{}, err
 	}
 	return user, nil
 }
