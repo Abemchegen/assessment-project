@@ -9,11 +9,13 @@ import (
 
 type UserController struct {
 	userUsecase domain.UserUsecase
+	logusecase  domain.LogUsecase
 }
 
-func NewUserController(userUsecase domain.UserUsecase) *UserController {
+func NewUserController(userUsecase domain.UserUsecase, logusecase domain.LogUsecase) *UserController {
 	return &UserController{
 		userUsecase: userUsecase,
+		logusecase:  logusecase,
 	}
 }
 
