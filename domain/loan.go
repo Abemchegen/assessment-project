@@ -12,6 +12,16 @@ type Loan struct {
 }
 
 type LoanRepository interface {
+	Apply(loan *Loan) error
+	View(id string) (*Loan, error)
+	ViewAll() ([]*Loan, error)
+	ApproveReject(id string, status string) error
+	Delete(id string) error
 }
 type LoanUsecase interface {
+	Apply(loan *Loan) error
+	View(id string) (*Loan, error)
+	ViewAll() ([]*Loan, error)
+	ApproveReject(id string, status string) error
+	Delete(id string) error
 }
